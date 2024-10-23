@@ -23,6 +23,8 @@ class StyleLossLayer(object):
         # TODO： 计算风格迁移图像和目标风格图像的Gram 矩阵
         style_layer_reshape = np.reshape(style_layer, [style_layer.shape[0], style_layer.shape[1], -1])
         self.gram_style = np.zeros([style_layer.shape[0], style_layer.shape[1], style_layer.shape[1]])
+        for idxn in range(style_layer.shape[0]):
+            self.gram_style[idxn, :, :] = np.matmul(style_layer_reshape[idxn, :, :], np.transpose(style_layer_reshape[idxn, :, :]))
         self.input_layer_reshape = np.reshape(input_layer, [input_layer.shape[0], input_layer.shape[1], -1])
         self.gram_input = np.zeros([input_layer.shape[0], input_layer.shape[1], input_layer.shape[1]])
         for idxn in range(input_layer.shape[0]):

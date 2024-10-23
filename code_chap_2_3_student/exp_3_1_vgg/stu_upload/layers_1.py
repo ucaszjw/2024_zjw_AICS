@@ -25,13 +25,13 @@ class FullyConnectedLayer(object):  # 全连接层初始化
         start_time = time.time()
         self.input = input
         # TODO：全连接层的前向传播，计算输出结果
-        self.output =  self.input.dot(self.weight) + self.bias
+        self.output = np.dot(self.input, self.weight) + self.bias
         return self.output
     def backward(self, top_diff):  # 反向传播的计算
         # TODO：全连接层的反向传播，计算参数梯度和本层损失
-        self.d_weight = self.input.T.dot(top_diff)
-        self.d_bias = np.ones([1, self.input.shape[0]]).dot(top_diff)
-        bottom_diff = top_diff.dot(self.weight.T)
+        self.d_weight = np.dot(self.input.T, top_diff)
+        self.d_bias = np.sum(top_diff, axis=0, keepdims=True)
+        bottom_diff = np.dot(top_diff, self.weight.T)
         return bottom_diff
     def get_gradient(self):
         return self.d_weight, self.d_bias
@@ -53,7 +53,7 @@ class ReLULayer(object):
     def forward(self, input):  # 前向传播的计算
         self.input = input
         # TODO：ReLU层的前向传播，计算输出结果
-        output = np.maximum(0, self.input)
+        output = np.maximum(0, input)
         return output
     def backward(self, top_diff):  # 反向传播的计算
         # TODO：ReLU层的反向传播，计算本层损失

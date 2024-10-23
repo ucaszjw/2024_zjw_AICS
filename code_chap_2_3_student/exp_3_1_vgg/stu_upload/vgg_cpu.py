@@ -74,8 +74,8 @@ class VGG19(object):
         self.layers['relu5_4'] = ReLULayer()
         self.layers['pool5'] = MaxPoolingLayer(2, 2)
 
-        self.layers['flatten'] = FlattenLayer([512, 7, 7], [512 * 7 * 7])
-        self.layers['fc6'] = FullyConnectedLayer(512 * 7 * 7, 4096)
+        self.layers['flatten'] = FlattenLayer([512, 7, 7], [512*7*7])
+        self.layers['fc6'] = FullyConnectedLayer(512*7*7, 4096)
         self.layers['relu6'] = ReLULayer()
         self.layers['fc7'] = FullyConnectedLayer(4096, 4096)
         self.layers['relu7'] = ReLULayer()

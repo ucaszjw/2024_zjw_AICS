@@ -44,36 +44,30 @@ class ConvolutionalLayer(object):
                 for idxh in range(height_out):
                     for idxw in range(width_out):
                         # TODO: 计算卷积层的前向传播，特征图与卷积核的内积再加偏置
-                        self.output[idxn, idxc, idxh, idxw] = np.sum(self.input_pad[idxn, :,
-                            idxh * self.stride : idxh * self.stride + self.kernel_size, idxw * self.stride
-                            : idxw * self.stride + self.kernel_size] * self.weight[:, :, :, idxc]) + self.bias[idxc]
+                        self.output[idxn, idxc, idxh, idxw] = np.sum(self.input_pad[idxn, :, idxh * self.stride : idxh * self.stride + self.kernel_size, idxw * self.stride : idxw * self.stride + self.kernel_size] * self.weight[:, :, :, idxc]) + self.bias[idxc]
         self.forward_time = time.time() - start_time
         return self.output
     def forward_speedup(self, input):
         # TODO: 改进forward函数，使得计算加速
         start_time = time.time()
-        self.input = input
-        height = self.input.shape[2] + self.padding * 2
-        width = self.input.shape[3] + self.padding * 2
+
+        self.input = input # [N, C, H, W]
+        # TODO: 边界扩充
+        height = self.input.shape[2] + 2 * self.padding
+        width = self.input.shape[3] + 2 * self.padding
         self.input_pad = np.zeros([self.input.shape[0], self.input.shape[1], height, width])
-        self.input_pad[:, :, self.padding:self.padding+self.input.shape[2], self.padding:self.padding+self.input.shape[3]] = self.input
+        self.input_pad[:, :, self.padding : self.padding + self.input.shape[2], self.padding : self.padding + self.input.shape[3]] = self.input
         self.height_out = (height - self.kernel_size) // self.stride + 1
-        self.width_out = (width - self.kernel_size) // self.stride + 1
-        # new
-        self.weight_reshape = np.reshape(self.weight, [-1, self.channel_out]) # [C_in * K * K, C_out]
-        self.img2col = np.zeros([self.input.shape[0] * self.height_out * self.width_out, self.channel_in * self.kernel_size * self.kernel_size]) # [N * H_out * W_out, C_in * K * K]
-        # 对卷积层的输入特征图进行向量化重排列
+        self.width_out = (width - self.kernel_size) // self.stride + 1 
+
+        self.weight_reshape = np.reshape(self.weight, [self.channel_in * self.kernel_size * self.kernel_size, self.channel_out])
+        self.input_col = np.zeros([self.input.shape[0] * self.height_out * self.width_out, self.kernel_size * self.kernel_size * self.channel_in])
         for idxn in range(self.input.shape[0]):
             for idxh in range(self.height_out):
                 for idxw in range(self.width_out):
-                    self.img2col[idxn * self.height_out * self.width_out + idxh * self.width_out + idxw,:] = np.reshape(
-                        self.input_pad[idxn, :, idxh * self.stride : idxh * self.stride + self.kernel_size,
-                                       idxw * self.stride : idxw * self.stride + self.kernel_size], [-1])
-        # for every 0th idx, get an [C_in * K * K] array. 1th idx is for channel_out
+                    self.input_col[idxn * self.height_out * self.width_out + idxh * self.width_out + idxw, :] = np.reshape(self.input_pad[idxn, :, idxh * self.stride : idxh * self.stride + self.kernel_size, idxw * self.stride : idxw * self.stride + self.kernel_size], [-1])
+        self.output = np.reshape(np.dot(self.input_col, self.weight_reshape) + self.bias, [self.input.shape[0], self.height_out, self.width_out, -1]).transpose([0, 3, 1, 2])
 
-        # TODO: 计算卷积层的前向传播，特征图与卷积核的内积再加偏置
-        output = np.dot(self.img2col, self.weight_reshape) + self.bias
-        self.output = np.reshape(output, [self.input.shape[0], self.height_out, self.width_out, -1]).transpose([0, 3, 1, 2])
         self.forward_time = time.time() - start_time
         return self.output
     def backward_speedup(self, top_diff):
@@ -91,10 +85,9 @@ class ConvolutionalLayer(object):
                 for idxh in range(top_diff.shape[2]):
                     for idxw in range(top_diff.shape[3]):
                         # TODO： 计算卷积层的反向传播， 权重、偏置的梯度和本层损失
-                        self.d_weight[:, :, :, idxc] += self.input_pad[idxn, :, idxh*self.stride:idxh*self.stride+self.kernel_size,
-                                idxw*self.stride:idxw*self.stride+self.kernel_size] * top_diff[idxn, idxc, idxh, idxw]
+                        self.d_weight[:, :, :, idxc] += self.input_pad[idxn, :, idxh*self.stride:idxh*self.stride+self.kernel_size, idxw*self.stride:idxw*self.stride+self.kernel_size] * top_diff[idxn, idxc, idxh, idxw]
                         self.d_bias[idxc] += top_diff[idxn, idxc, idxh, idxw]
-                        bottom_diff[idxn, :, idxh*self.stride:idxh*self.stride+self.kernel_size,idxw*self.stride:idxw*self.stride+self.kernel_size] += top_diff[idxn, idxc, idxh, idxw] * self.weight[:, :, :, idxc]
+                        bottom_diff[idxn, :, idxh*self.stride:idxh*self.stride+self.kernel_size, idxw*self.stride:idxw*self.stride+self.kernel_size] += top_diff[idxn, idxc, idxh, idxw] * self.weight[:, :, :, idxc]
         bottom_diff = bottom_diff[:, :, self.padding:self.padding+self.input.shape[2], self.padding:self.padding+self.input.shape[3]]
         self.backward_time = time.time() - start_time
         return bottom_diff
@@ -139,9 +132,7 @@ class MaxPoolingLayer(object):
                 for idxh in range(height_out):
                     for idxw in range(width_out):
                         # TODO： 计算最大池化层的前向传播， 取池化窗口内的最大值
-                        self.output[idxn, idxc, idxh, idxw] = np.max(self.input[idxn, idxc,
-                            idxh * self.stride : idxh * self.stride + self.kernel_size,
-                            idxw * self.stride : idxw * self.stride + self.kernel_size])
+                        self.output[idxn, idxc, idxh, idxw] = np.max(self.input[idxn, idxc, idxh*self.stride:idxh*self.stride+self.kernel_size, idxw*self.stride:idxw*self.stride+self.kernel_size])
                         curren_max_index = np.argmax(self.input[idxn, idxc, idxh*self.stride:idxh*self.stride+self.kernel_size, idxw*self.stride:idxw*self.stride+self.kernel_size])
                         curren_max_index = np.unravel_index(curren_max_index, [self.kernel_size, self.kernel_size])
                         self.max_index[idxn, idxc, idxh*self.stride+curren_max_index[0], idxw*self.stride+curren_max_index[1]] = 1

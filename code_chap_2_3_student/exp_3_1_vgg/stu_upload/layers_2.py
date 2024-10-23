@@ -29,11 +29,11 @@ class ConvolutionalLayer(object):
        self.input = input # [N, C, H, W]
        # TODO: 边界扩充
        height = self.input.shape[2] + 2 * self.padding
-        width = self.input.shape[3] + 2 * self.padding
+       width = self.input.shape[3] + 2 * self.padding
        self.input_pad = np.zeros([self.input.shape[0], self.input.shape[1], height, width])
        self.input_pad[:, :, self.padding : self.padding + self.input.shape[2], self.padding : self.padding + self.input.shape[3]] = self.input
        height_out = (height - self.kernel_size) // self.stride + 1
-       width_out = (width - self.kernel_size) // self.stride + 1
+       width_out = (width - self.kernel_size) // self.stride + 1 
        self.output = np.zeros([self.input.shape[0], self.channel_out, height_out, width_out])
        for idxn in range(self.input.shape[0]):
            for idxc in range(self.channel_out):

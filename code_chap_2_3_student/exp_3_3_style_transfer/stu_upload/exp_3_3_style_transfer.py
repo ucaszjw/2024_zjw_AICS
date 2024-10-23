@@ -69,7 +69,6 @@ class VGG19(object):
         self.layers['relu5_2'] = ReLULayer()
         self.layers['conv5_3'] = ConvolutionalLayer(3, 512, 512, 1, 1, type=1)
         self.layers['relu5_3'] = ReLULayer()
-
         self.layers['conv5_4'] = ConvolutionalLayer(3, 512, 512, 1, 1, type=1)
         self.layers['relu5_4'] = ReLULayer()
         self.layers['pool5'] = MaxPoolingLayer(2, 2)
@@ -161,9 +160,9 @@ class AdamOptimizer(object):
         # TODO：补全参数更新过程
         self.step += 1
         self.mt = self.beta1 * self.mt + (1 - self.beta1) * grad
-        self.vt = self.beta2 * self.vt + (1 - self.beta2) * (grad ** 2)
-        mt_hat = self.mt // (1 - self.beta1 ** self.step)
-        vt_hat = self.vt // (1 - self.beta2 ** self.step)
+        self.vt = self.beta2 * self.vt + (1 - self.beta2) * grad * grad
+        mt_hat = self.mt / (1 - self.beta1 ** self.step)
+        vt_hat = self.vt / (1 - self.beta2 ** self.step)
         # TODO： 利用梯度的一阶矩和二阶矩的无偏估计更新风格迁移图像
         output = input - self.lr * mt_hat / (np.sqrt(vt_hat) + self.eps)
         return output

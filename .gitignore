@@ -1,5 +1,3 @@
-.venv
-
 neuware_home
-
 pycnnl
+*.mat

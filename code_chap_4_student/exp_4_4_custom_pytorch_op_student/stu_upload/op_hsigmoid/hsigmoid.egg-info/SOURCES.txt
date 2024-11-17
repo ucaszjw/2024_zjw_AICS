@@ -1,0 +1,6 @@
+hsigmoid.cpp
+setup.py
+hsigmoid.egg-info/PKG-INFO
+hsigmoid.egg-info/SOURCES.txt
+hsigmoid.egg-info/dependency_links.txt
+hsigmoid.egg-info/top_level.txt

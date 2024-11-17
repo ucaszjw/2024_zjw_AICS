@@ -7,7 +7,7 @@ setup(
     ext_modules=[
         cpp_extension.CppExtension(
     #TODO：以正确的格式给出编译文件即编译函数
-            'hsigmoid', 
+            'hsigmoid',
             ['hsigmoid.cpp']
         )
     ],

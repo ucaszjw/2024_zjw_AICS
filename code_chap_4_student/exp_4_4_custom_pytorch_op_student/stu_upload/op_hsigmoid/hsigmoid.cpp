@@ -12,8 +12,8 @@ torch::Tensor hsigmoid_cpu(const torch::Tensor & dets) {
   //TODO: 创建一个浮点类型的output_data，output_data为大小与输入相同的vector
   vector<float> output_data(input_size);
   //TODO: 对于输入向量的每个元素计算hsigmoid
-  for (int i = 0; i < input_size; i++) {
-    output_data[i] = 1.0 / (1.0 + exp(-input_data[i]));
+  for (int i = 0; i < input_size; ++i){
+    output_data.at(i) = 1.0 / (1.0 + exp(-input_data.at(i)));
   }
   //TODO: Create tensor options with dtype float32
   auto opts = torch::TensorOptions().dtype(torch::kFloat32);
@@ -25,5 +25,5 @@ torch::Tensor hsigmoid_cpu(const torch::Tensor & dets) {
 } 
 //TODO: 算子绑定为Pytorch的模块
 PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {	
-  m.def("hsigmoid_cpu", &hsigmoid_cpu, "hsigmoid_cpu (CPU)");
-}       
+  m.def("hsigmoid", &hsigmoid_cpu, "customed hsigmoid forward function (CPU)");
+}

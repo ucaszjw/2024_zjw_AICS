@@ -8,7 +8,7 @@ import cv2
 import numpy
 import time
 #TODO：导入自定义动态链接库
-from op_hsigmoid import hsigmod 
+from op_hsigmoid import hsigmoid
 
 
 
@@ -47,7 +47,6 @@ class ResBlock(nn.Module):
     def __init__(self, c):
         super(ResBlock, self).__init__()
         self.layer = nn.Sequential(
-            
             #TODO: 进行卷积，卷积核为3*1*1
             nn.Conv2d(c, c, kernel_size=3, stride=1, padding=1),
             #TODO: 执行实例归一化
@@ -123,18 +122,17 @@ class TransNet(nn.Module):
         )
 
 
-        def forward(self, x):
-            x = self.layer(x)
-            #调用自定义hsigmoid算子对rand进行处理得到输出结果out
-            out = hsigmod.hsigmoid(x)
-            return out
+    def forward(self, x):
+        x = self.layer(x)
+        out = hsigmoid.hsigmoid(x)
+        return out
 
 
 if __name__ == '__main__':
     # TODO: 使用cpu生成图像转换网络模型并保存在g_net中
     g_net = TransNet()
     # TODO:从/models文件夹下加载网络参数到g_net中
-    g_net.load_state_dict(torch.load('../models/fst.path'), strict=False)
+    g_net.load_state_dict(torch.load('../models/fst.pth'), strict = False)
     print("g_net build PASS!\n")
     data_set = COCODataSet()
     print("load COCODataSet PASS!\n")
@@ -151,9 +149,8 @@ if __name__ == '__main__':
         delta_time = end - start
         print("Inference (CPU) processing time: %s" % delta_time)
         #TODO: 利用save_image函数将tensor形式的生成图像image_g以及输入图像image_c以jpg格式左右拼接的形式保存在/out/cpu/文件夹下
-        save_image(torch.cat([image_c, image_g], dim=3), '../out/cpu/%d.jpg' % i)
+        save_image(torch.cat((image_g, image_c), dim=3), '../out/cpu/%d.jpg' % i)
         break
     print("TEST RESULT PASS!\n")
-
 
 

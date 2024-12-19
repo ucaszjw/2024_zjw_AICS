@@ -2,3 +2,4 @@ neuware_home
 pycnnl
 *.mat
 pycnnl.egg-info
+code_chap_7_student/bert_train/pretrain_bert_base_cased/pytorch_model.bin
